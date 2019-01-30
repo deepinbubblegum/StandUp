@@ -1,5 +1,6 @@
 package com.deepin.standup;
 
+import android.app.AlarmManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -7,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.CompoundButton;
@@ -16,8 +18,8 @@ import android.widget.ToggleButton;
 public class MainActivity extends AppCompatActivity {
 
     private NotificationManager mNotificationManager;
-    private static final int NOTIFICATION_ID = 0;
-    private static final String PRIMARY_CHANNEL_ID =
+    public static final int NOTIFICATION_ID = 0;
+    public static final String PRIMARY_CHANNEL_ID =
             "primary_notification_channel";
 
     private void deliverNotification(Context context) {
@@ -42,6 +44,11 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         ToggleButton alarmToggle = findViewById(R.id.alarmToggle);
 
+        Intent notifyIntent = new Intent(this, AlarmReceiver.class);
+        final PendingIntent notifyPendingIntent = PendingIntent.getBroadcast
+                (this, NOTIFICATION_ID, notifyIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        final AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+
         mNotificationManager = (NotificationManager)
                 getSystemService(NOTIFICATION_SERVICE);
         alarmToggle.setOnCheckedChangeListener(
@@ -51,13 +58,24 @@ public class MainActivity extends AppCompatActivity {
                                                  boolean isChecked) {
                         String toastMessage;
                         if(isChecked){
-                            deliverNotification(MainActivity.this);
-                            //Set the toast message for the "on" case
+//                            deliverNotification(MainActivity.this);
+                            long repeatInterval = 5*1000;
+                            long triggerTime = SystemClock.elapsedRealtime()
+                                    + repeatInterval;
+
+//If the Toggle is turned on, set the repeating alarm with a 15 minute interval
+                            if (alarmManager != null) {
+                                alarmManager.setInexactRepeating
+                                        (AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                                                triggerTime, repeatInterval, notifyPendingIntent);
+                            }
                             toastMessage = "Stand Up Alarm On!";
                         } else {
                             //Cancel notification if the alarm is turned off
-                            mNotificationManager.cancelAll();
-
+//                            mNotificationManager.cancelAll();
+                            if (alarmManager != null) {
+                                alarmManager.cancel(notifyPendingIntent);
+                            }
                             //Set the toast message for the "off" case
                             toastMessage = "Stand Up Alarm Off!";
                         }

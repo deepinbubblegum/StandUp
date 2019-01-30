@@ -1,5 +1,8 @@
 package com.deepin.standup;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.CompoundButton;
@@ -8,11 +11,19 @@ import android.widget.ToggleButton;
 
 public class MainActivity extends AppCompatActivity {
 
+    private NotificationManager mNotificationManager;
+    private static final int NOTIFICATION_ID = 0;
+    private static final String PRIMARY_CHANNEL_ID =
+            "primary_notification_channel";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ToggleButton alarmToggle = findViewById(R.id.alarmToggle);
+
+        mNotificationManager = (NotificationManager)
+                getSystemService(NOTIFICATION_SERVICE);
 
         alarmToggle.setOnCheckedChangeListener(
                 new CompoundButton.OnCheckedChangeListener() {
@@ -33,5 +44,36 @@ public class MainActivity extends AppCompatActivity {
                                 .show();
                     }
                 });
+        createNotificationChannel();
     }
+
+    /**
+     * Creates a Notification channel, for OREO and higher.
+     */
+    public void createNotificationChannel() {
+
+        // Create a notification manager object.
+        mNotificationManager =
+                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+        // Notification channels are only available in OREO and higher.
+        // So, add a check on SDK version.
+        if (android.os.Build.VERSION.SDK_INT >=
+                android.os.Build.VERSION_CODES.O) {
+
+            // Create the NotificationChannel with all the parameters.
+            NotificationChannel notificationChannel = new NotificationChannel
+                    (PRIMARY_CHANNEL_ID,
+                            "Stand up notification",
+                            NotificationManager.IMPORTANCE_HIGH);
+
+            notificationChannel.enableLights(true);
+            notificationChannel.setLightColor(Color.RED);
+            notificationChannel.enableVibration(true);
+            notificationChannel.setDescription
+                    ("Notifies every 15 minutes to stand up and walk");
+            mNotificationManager.createNotificationChannel(notificationChannel);
+        }
+    }
+
 }
